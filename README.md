@@ -171,3 +171,7 @@ Run frontend linting:
 cd frontend
 npx eslint . --format json
 ```
+
+## Author
+- Ferdynand Odhiambo
+Email: oferdinanddev112@gmail.com
