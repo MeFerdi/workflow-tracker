@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import client from "../api/client";
+import client, { getApiErrorMessage } from "../api/client";
 import type { Application } from "../types/application";
 
 export default function ApplicationDetail() {
@@ -15,6 +15,7 @@ export default function ApplicationDetail() {
     client
       .get(`/applications/${id}`)
       .then((res) => setApp(res.data))
+      .catch((err: unknown) => setError(getApiErrorMessage(err)))
       .finally(() => setLoading(false));
   }, [id]);
 
@@ -24,53 +25,108 @@ export default function ApplicationDetail() {
     try {
       const res = await client.post(url, payload);
       setApp(res.data);
-    } catch (err: any) {
-      setError(err.response?.data?.detail || "Something went wrong");
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err));
     } finally {
       setActing(false);
     }
   };
 
-  if (loading) return <p>Loading...</p>;
-  if (!app) return <p>Application not found.</p>;
+  if (loading) {
+    return (
+      <main className="page-shell" aria-busy="true">
+        <div className="page-header">
+          <p className="eyebrow">Applications</p>
+          <h1>Application Detail</h1>
+        </div>
+        <div className="data-panel">
+          <div className="skeleton skeleton-title" />
+          <div className="skeleton skeleton-row" />
+          <div className="skeleton skeleton-row" />
+          <div className="skeleton skeleton-row" />
+        </div>
+      </main>
+    );
+  }
+
+  if (!app) {
+    return (
+      <main className="page-shell page-shell--narrow">
+        <div className="empty-state">
+          <h1>Application not found</h1>
+          <p>The requested application could not be loaded.</p>
+          {error && <div className="alert alert-error" role="alert">{error}</div>}
+          <button className="button button-primary" type="button" onClick={() => navigate("/applications")}>
+            Back to applications
+          </button>
+        </div>
+      </main>
+    );
+  }
 
   return (
-    <div style={{ padding: "2rem", maxWidth: "700px" }}>
-      <button onClick={() => navigate("/applications")}>← Back</button>
-      <h1>Application Detail</h1>
+    <main className="page-shell">
+      <button className="button button-link" type="button" onClick={() => navigate("/applications")}>
+        Back to applications
+      </button>
 
-      {error && <p style={{ color: "red" }}>{error}</p>}
+      <div className="page-header page-header--split">
+        <div>
+          <p className="eyebrow">Application</p>
+          <h1>{app.tracking_number}</h1>
+          <p className="page-subtitle">{app.company_name}</p>
+        </div>
+        <span className="status-pill">{app.status}</span>
+      </div>
 
-      <table border={1} cellPadding={8} style={{ width: "100%", borderCollapse: "collapse", marginBottom: "2rem" }}>
-        <tbody>
-          <tr><td><strong>Tracking Number</strong></td><td>{app.tracking_number}</td></tr>
-          <tr><td><strong>Applicant Name</strong></td><td>{app.applicant_name}</td></tr>
-          <tr><td><strong>Email</strong></td><td>{app.applicant_email}</td></tr>
-          <tr><td><strong>Company</strong></td><td>{app.company_name}</td></tr>
-          <tr><td><strong>Type</strong></td><td>{app.application_type}</td></tr>
-          <tr><td><strong>Description</strong></td><td>{app.description}</td></tr>
-          <tr><td><strong>Status</strong></td><td>{app.status}</td></tr>
-          <tr><td><strong>Created</strong></td><td>{new Date(app.created_at).toLocaleDateString()}</td></tr>
-          {app.submitted_at && <tr><td><strong>Submitted</strong></td><td>{new Date(app.submitted_at).toLocaleDateString()}</td></tr>}
-          {app.reviewed_at && <tr><td><strong>Reviewed</strong></td><td>{new Date(app.reviewed_at).toLocaleDateString()}</td></tr>}
-          {app.reviewer_comment && <tr><td><strong>Reviewer Comment</strong></td><td>{app.reviewer_comment}</td></tr>}
-        </tbody>
-      </table>
+      {error && (
+        <div className="alert alert-error" role="alert">
+          {error}
+        </div>
+      )}
 
-      <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
+      <dl className="detail-grid">
+        <div><dt>Applicant name</dt><dd>{app.applicant_name}</dd></div>
+        <div><dt>Email</dt><dd>{app.applicant_email}</dd></div>
+        <div><dt>Company</dt><dd>{app.company_name}</dd></div>
+        <div><dt>Type</dt><dd>{app.application_type}</dd></div>
+        <div><dt>Created</dt><dd>{new Date(app.created_at).toLocaleDateString()}</dd></div>
+        {app.submitted_at && (
+          <div><dt>Submitted</dt><dd>{new Date(app.submitted_at).toLocaleDateString()}</dd></div>
+        )}
+        {app.reviewed_at && (
+          <div><dt>Reviewed</dt><dd>{new Date(app.reviewed_at).toLocaleDateString()}</dd></div>
+        )}
+        <div className="detail-grid__wide"><dt>Description</dt><dd>{app.description}</dd></div>
+        {app.reviewer_comment && (
+          <div className="detail-grid__wide"><dt>Reviewer comment</dt><dd>{app.reviewer_comment}</dd></div>
+        )}
+      </dl>
+
+      <div className="action-bar" aria-busy={acting}>
         {app.status === "Draft" && (
           <>
-            <button onClick={() => navigate(`/applications/${id}/edit`)}>
+            <button className="button button-secondary" type="button" onClick={() => navigate(`/applications/${id}/edit`)}>
               Edit
             </button>
-            <button onClick={() => performAction(`/applications/${id}/submit`)}>
+            <button
+              className="button button-primary"
+              type="button"
+              onClick={() => performAction(`/applications/${id}/submit`)}
+              disabled={acting}
+            >
               {acting ? "Submitting..." : "Submit"}
             </button>
           </>
         )}
 
         {app.status === "Submitted" && (
-          <button onClick={() => performAction(`/applications/${id}/review`)}>
+          <button
+            className="button button-primary"
+            type="button"
+            onClick={() => performAction(`/applications/${id}/review`)}
+            disabled={acting}
+          >
             {acting ? "Starting..." : "Start Review"}
           </button>
         )}
@@ -78,6 +134,9 @@ export default function ApplicationDetail() {
         {app.status === "Under Review" && (
           <>
             <button
+              className="button button-primary"
+              type="button"
+              disabled={acting}
               onClick={() =>
                 performAction(`/applications/${id}/decision`, {
                   decision: "Approved",
@@ -87,10 +146,10 @@ export default function ApplicationDetail() {
             >
               {acting ? "Processing..." : "Approve"}
             </button>
-            <button onClick={() => navigate(`/applications/${id}/review`)}>
+            <button className="button button-secondary" type="button" onClick={() => navigate(`/applications/${id}/review`)}>
               Need More Information
             </button>
-            <button onClick={() => navigate(`/applications/${id}/review`)}>
+            <button className="button button-danger" type="button" onClick={() => navigate(`/applications/${id}/review`)}>
               Reject
             </button>
           </>
@@ -98,15 +157,20 @@ export default function ApplicationDetail() {
 
         {app.status === "Need More Info" && (
           <>
-            <button onClick={() => navigate(`/applications/${id}/edit`)}>
+            <button className="button button-secondary" type="button" onClick={() => navigate(`/applications/${id}/edit`)}>
               Edit
             </button>
-            <button onClick={() => performAction(`/applications/${id}/submit`)}>
+            <button
+              className="button button-primary"
+              type="button"
+              onClick={() => performAction(`/applications/${id}/submit`)}
+              disabled={acting}
+            >
               {acting ? "Submitting..." : "Resubmit"}
             </button>
           </>
         )}
       </div>
-    </div>
+    </main>
   );
 }
