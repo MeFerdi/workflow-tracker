@@ -18,7 +18,7 @@ export type ApplicationStatus =
   | "Draft"
   | "Submitted"
   | "Under Review"
-  | "Need More Information"
+  | "Need More Info"
   | "Approved"
   | "Rejected";
 
