@@ -1,4 +1,5 @@
 from ninja import Router
+from ninja.errors import HttpError
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from .models import Application
@@ -38,11 +39,7 @@ def update_draft(request, id: int, payload: ApplicationUpdateSchema):
     ]
 
     if application.status not in editable_statuses:
-        return router.create_response(
-            request,
-            {"detail": "Only Draft or Need More Information applications can be edited."},
-            status=400,
-        )
+        raise HttpError(400, "Only Draft or Need More Information applications can be edited.")
 
     for attr, value in payload.dict(exclude_none=True).items():
         setattr(application, attr, value)
@@ -59,11 +56,7 @@ def submit_application(request, id: int):
         Application.Status.DRAFT,
         Application.Status.NEED_MORE_INFO
     ]:
-        return router.create_response(
-            request,
-            {"detail": "Only Draft or Need More Information applications can be submitted."},
-            status=400,
-        )
+        raise HttpError(400, "Only Draft or Need More Information applications can be submitted.")
 
     application.status = Application.Status.SUBMITTED
     application.submitted_at = timezone.now()
@@ -76,11 +69,7 @@ def start_review(request, id: int):
     application = get_object_or_404(Application, id=id)
 
     if application.status != Application.Status.SUBMITTED:
-        return router.create_response(
-            request,
-            {"detail": "Only Submitted applications can move to Under Review."},
-            status=400,
-        )
+        raise HttpError(400, "Only Submitted applications can move to Under Review.")
 
     application.status = Application.Status.UNDER_REVIEW
     application.save()
@@ -92,11 +81,7 @@ def record_decision(request, id: int, payload: ReviewerDecisionSchema):
     application = get_object_or_404(Application, id=id)
 
     if application.status != Application.Status.UNDER_REVIEW:
-        return router.create_response(
-            request,
-            {"detail": "Only Under Review applications can receive a decision."},
-            status=400,
-        )
+        raise HttpError(400, "Only Under Review applications can receive a decision.")
 
     valid_decisions = [
         Application.Status.APPROVED,
@@ -105,21 +90,13 @@ def record_decision(request, id: int, payload: ReviewerDecisionSchema):
     ]
 
     if payload.decision not in valid_decisions:
-        return router.create_response(
-            request,
-            {"detail": f"Invalid decision. Choose from: {valid_decisions}"},
-            status=400,
-        )
+        raise HttpError(400, f"Invalid decision. Choose from: {valid_decisions}")
 
     if payload.decision in [
         Application.Status.REJECTED,
         Application.Status.NEED_MORE_INFO
     ] and not payload.reviewer_comment:
-        return router.create_response(
-            request,
-            {"detail": "A comment is required for Rejected or Need More Information decisions."},
-            status=400,
-        )
+        raise HttpError(400, "A comment is required for Rejected or Need More Information decisions.")
 
     application.status = payload.decision
     application.reviewer_comment = payload.reviewer_comment
