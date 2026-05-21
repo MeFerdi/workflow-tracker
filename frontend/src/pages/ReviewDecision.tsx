@@ -15,7 +15,7 @@ export default function ReviewDecision() {
       setError("Please select a decision.");
       return;
     }
-    if ((decision === "Rejected" || decision === "Need More Information") && !comment) {
+    if ((decision === "Rejected" || decision === "Need More Info") && !comment) {
       setError("A comment is required for this decision.");
       return;
     }
@@ -44,7 +44,7 @@ export default function ReviewDecision() {
         <select value={decision} onChange={(e) => setDecision(e.target.value)}>
           <option value="">Select Decision</option>
           <option value="Approved">Approved</option>
-          <option value="Need More Information">Need More Information</option>
+          <option value="Need More Info">Need More Information</option>
           <option value="Rejected">Rejected</option>
         </select>
 

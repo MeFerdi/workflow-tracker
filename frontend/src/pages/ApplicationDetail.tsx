@@ -18,11 +18,11 @@ export default function ApplicationDetail() {
       .finally(() => setLoading(false));
   }, [id]);
 
-  const performAction = async (url: string) => {
+  const performAction = async (url: string, payload?: unknown) => {
     setActing(true);
     setError(null);
     try {
-      const res = await client.post(url);
+      const res = await client.post(url, payload);
       setApp(res.data);
     } catch (err: any) {
       setError(err.response?.data?.detail || "Something went wrong");
@@ -77,7 +77,14 @@ export default function ApplicationDetail() {
 
         {app.status === "Under Review" && (
           <>
-            <button onClick={() => performAction(`/applications/${id}/decision`)}>
+            <button
+              onClick={() =>
+                performAction(`/applications/${id}/decision`, {
+                  decision: "Approved",
+                  reviewer_comment: "",
+                })
+              }
+            >
               {acting ? "Processing..." : "Approve"}
             </button>
             <button onClick={() => navigate(`/applications/${id}/review`)}>
@@ -89,7 +96,7 @@ export default function ApplicationDetail() {
           </>
         )}
 
-        {app.status === "Need More Information" && (
+        {app.status === "Need More Info" && (
           <>
             <button onClick={() => navigate(`/applications/${id}/edit`)}>
               Edit
