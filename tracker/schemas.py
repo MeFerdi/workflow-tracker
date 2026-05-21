@@ -15,7 +15,7 @@ class ApplicationCreateSchema(Schema):
 class ApplicationUpdateSchema(Schema):
     applicant_name: Optional[str] = None
     applicant_email: Optional[EmailStr] = None
-     company_name: Optional[str] = None
+    company_name: Optional[str] = None
     application_type: Optional[str] = None
     description: Optional[str] = None
 
