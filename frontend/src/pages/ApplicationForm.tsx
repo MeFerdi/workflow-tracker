@@ -168,7 +168,6 @@ export default function ApplicationForm() {
               autoComplete="name"
               spellCheck={false}
               maxLength={160}
-              placeholder="Jane Mwangi"
               value={form.applicant_name}
               onChange={handleChange}
               aria-invalid={fieldErrors.applicant_name ? "true" : undefined}
@@ -191,7 +190,6 @@ export default function ApplicationForm() {
               autoComplete="email"
               spellCheck={false}
               maxLength={254}
-              placeholder="jane@example.com"
               value={form.applicant_email}
               onChange={handleChange}
               aria-invalid={fieldErrors.applicant_email ? "true" : undefined}
@@ -214,7 +212,6 @@ export default function ApplicationForm() {
               autoComplete="organization"
               spellCheck={false}
               maxLength={180}
-              placeholder="Acme Holdings Limited"
               value={form.company_name}
               onChange={handleChange}
               aria-invalid={fieldErrors.company_name ? "true" : undefined}
@@ -272,7 +269,6 @@ export default function ApplicationForm() {
               onChange={handleChange}
               rows={6}
               maxLength={1200}
-              placeholder="Summarize the record, change, or supporting context."
               aria-invalid={fieldErrors.description ? "true" : undefined}
               aria-describedby={fieldErrors.description ? "description-error" : "description-help"}
             />

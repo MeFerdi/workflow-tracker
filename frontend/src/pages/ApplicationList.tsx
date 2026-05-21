@@ -59,9 +59,6 @@ export default function ApplicationList() {
         <div className="empty-state">
           <h2>No applications yet</h2>
           <p>Create the first draft application to begin tracking records.</p>
-          <button className="button button-primary" type="button" onClick={() => navigate("/applications/new")}>
-            New Application
-          </button>
         </div>
       ) : (
         <div className="table-wrap">
